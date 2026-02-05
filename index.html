@@ -1,45 +1,81 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Fitsex</title>
-  <t<style>
-body{
-    margin:0;
-    height:100vh;
-    background-image: url("IMG_20260122_175529_145.jpg");
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+<title>Fitsex FPS</title>
+<style>
+body { margin:0; overflow:hidden; background:black; }
+#aim {
+ position:fixed;
+ top:50%;
+ left:50%;
+ transform:translate(-50%,-50%);
+ color:red;
+ font-size:30px;
 }
-</style>yle>
-    body {
-      background:black;
-      color:white;
-      font-family: Arial;
-      text-align:center;
-      padding-top:80px;
-    }
-    h1 { color:red; }
-    button {
-      padding:15px 30px;
-      background:red;
-      border:none;
-      color:white;
-      font-size:18px;
-      border-radius:10px;
-    }
-  </style>
+</style>
 </head>
 <body>
-  <h1>Fitsex</h1>
-  <p>Drop it again 🔥</p>
- <div style="margin-top:40px;">
-  <h2 style="color:red;">Join the Fitsex Movement</h2>
 
-  <a href="about.html" style="display:block; margin:15px; color:white;">About Fitsex</a>
-  <a href="#" style="display:block; margin:15px; color:white;">Telegram</a>
-  <a href="#" style="display:block; margin:15px; color:white;">TikTok</a>
-  <a href="#" style="display:block; margin:15px; color:white;">Instagram</a>
-</div> <button>Welcome to Fitsex</button>
+<div id="aim">+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+<script>
+let scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87CEEB);
+
+let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+let renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+let light = new THREE.DirectionalLight(0xffffff, 1);
+light.position.set(5,10,7);
+scene.add(light);
+
+let ground = new THREE.Mesh(
+ new THREE.PlaneGeometry(200,200),
+ new THREE.MeshLambertMaterial({color:0x228B22})
+);
+ground.rotation.x = -Math.PI/2;
+scene.add(ground);
+
+camera.position.y = 2;
+
+let enemy = new THREE.Mesh(
+ new THREE.BoxGeometry(1,2,1),
+ new THREE.MeshLambertMaterial({color:0xff0000})
+);
+enemy.position.set(0,1,-20);
+scene.add(enemy);
+
+let keys = {};
+document.addEventListener("keydown", e=>keys[e.key]=true);
+document.addEventListener("keyup", e=>keys[e.key]=false);
+
+document.body.onclick = ()=>document.body.requestPointerLock();
+document.addEventListener("mousemove", e=>{
+ if(document.pointerLockElement===document.body){
+   camera.rotation.y -= e.movementX * 0.002;
+ }
+});
+
+document.addEventListener("click", ()=>{
+ enemy.position.z = -Math.random()*50 - 10;
+ enemy.position.x = (Math.random()-0.5)*20;
+});
+
+function animate(){
+ requestAnimationFrame(animate);
+
+ if(keys["w"]) camera.translateZ(-0.2);
+ if(keys["s"]) camera.translateZ(0.2);
+ if(keys["a"]) camera.translateX(-0.2);
+ if(keys["d"]) camera.translateX(0.2);
+
+ renderer.render(scene, camera);
+}
+animate();
+</script>
+
 </body>
 </html>
