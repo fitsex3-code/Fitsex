@@ -1,55 +1,125 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="utf-8">
 <title>Fitsex City</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <script src="https://cdn.babylonjs.com/babylon.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <style>
-html,body{width:100%;height:100%;margin:0;overflow:hidden;}
-#renderCanvas{width:100%;height:100%;touch-action:none;}
+html,body {width:100%; height:100%; margin:0; overflow:hidden;}
+#renderCanvas {width:100%; height:100%; touch-action:none;}
+
+#loginBox{
+position:fixed;
+top:0; left:0;
+width:100%; height:100%;
+background:black;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+z-index:9999;
+color:white;
+}
 </style>
 </head>
 
 <body>
+
+<!-- GOOGLE LOGIN SCREEN -->
+<div id="loginBox">
+  <h1>FITSEX CITY</h1>
+  <p>Login with Google to enter the city</p>
+
+  <div id="g_id_onload"
+       data-client_id="YOUR_CLIENT_ID"
+       data-callback="onLogin">
+  </div>
+  <div class="g_id_signin"></div>
+</div>
+
 <canvas id="renderCanvas"></canvas>
 
 <script>
+/* LOGIN */
+function onLogin(res){
+  localStorage.setItem("fitsexUser", res.credential);
+  document.getElementById("loginBox").style.display="none";
+  startGame();
+}
+
+/* AUTO LOGIN */
+if(localStorage.getItem("fitsexUser")){
+  document.getElementById("loginBox").style.display="none";
+  startGame();
+}
+
+function startGame(){
+
 const canvas = document.getElementById("renderCanvas");
 const engine = new BABYLON.Engine(canvas,true);
 const scene = new BABYLON.Scene(engine);
 
-// Camera
+/* Camera */
 const camera = new BABYLON.UniversalCamera("cam",
- new BABYLON.Vector3(0,2,-10),scene);
+new BABYLON.Vector3(0,2,-10),scene);
 camera.attachControl(canvas,true);
-camera.speed=0.3;
 
-// Light
-new BABYLON.HemisphericLight("l",
- new BABYLON.Vector3(0,1,0),scene);
+/* Light */
+new BABYLON.HemisphericLight("light",
+new BABYLON.Vector3(0,1,0),scene);
 
-// Ground (city floor)
-BABYLON.MeshBuilder.CreateGround("g",
- {width:200,height:200},scene);
+/* Ground */
+const ground = BABYLON.MeshBuilder.CreateGround("ground",
+{width:200,height:200},scene);
 
-// Sky
-const sky = BABYLON.MeshBuilder.CreateBox("sky",{size:1000},scene);
-const skyMat = new BABYLON.StandardMaterial("s",scene);
-skyMat.backFaceCulling=false;
-skyMat.diffuseColor = new BABYLON.Color3(0.5,0.7,1);
-sky.material = skyMat;
-
-// Buildings
-for(let i=0;i<100;i++){
- let b = BABYLON.MeshBuilder.CreateBox("b",{width:4,height:Math.random()*10+5,depth:4},scene);
- b.position.x = Math.random()*180-90;
- b.position.z = Math.random()*180-90;
- b.position.y = b.scaling.y*2;
+/* City Buildings */
+for(let x=-50; x<50; x+=10){
+for(let z=-50; z<50; z+=10){
+  if(Math.random()>0.5){
+    let b = BABYLON.MeshBuilder.CreateBox("b",
+    {width:6, depth:6, height:Math.random()*20+5}, scene);
+    b.position.x=x;
+    b.position.z=z;
+    b.position.y=b.scaling.y*3;
+  }
+}
 }
 
-// Run
-engine.runRenderLoop(()=>{scene.render();});
+/* Player */
+const player = BABYLON.MeshBuilder.CreateBox("player",{size:2},scene);
+player.position.y=1;
+camera.parent = player;
+
+/* Shooting */
+window.addEventListener("click",()=>{
+  let ray = scene.createPickingRay(
+  canvas.width/2, canvas.height/2,
+  BABYLON.Matrix.Identity(), camera);
+
+  let hit = scene.pickWithRay(ray);
+  if(hit.pickedMesh){
+    hit.pickedMesh.dispose();
+  }
+});
+
+/* Movement */
+scene.onKeyboardObservable.add((kb)=>{
+ if(kb.type===BABYLON.KeyboardEventTypes.KEYDOWN){
+  if(kb.event.key=="w") player.position.z+=1;
+  if(kb.event.key=="s") player.position.z-=1;
+  if(kb.event.key=="a") player.position.x-=1;
+  if(kb.event.key=="d") player.position.x+=1;
+ }
+});
+
+engine.runRenderLoop(()=>scene.render());
+window.addEventListener("resize",()=>engine.resize());
+}
 </script>
+
 </body>
 </html>
